@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>TP Jet</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TP Jet">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --panel: #171a19;
+    --line: #2a2f2d;
+    --text: #f2f4f3;
+    --muted: #9aa39f;
+    --accent: #2fbf71;
+    --danger: #e5484d;
+    --guide: rgba(47, 191, 113, .35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { overscroll-behavior: none; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; cursor: pointer; min-height: 44px; }
+  button:active { transform: scale(.97); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #04150b; font-weight: 600; }
+  button.danger { color: var(--danger); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #04150b; }
+  .view { display: none; min-height: 100%; }
+  .view.active { display: block; }
+  .wrap { max-width: 720px; margin: 0 auto;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+  header.bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  header.bar h1 { font-size: 22px; margin: 0; flex: 1; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > button { flex: 1 1 auto; }
+  .hint { color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; display: flex; gap: 10px; align-items: center; }
+  .item .info { flex: 1; min-width: 0; cursor: pointer; }
+  .item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .s { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item button { min-width: 64px; }
+  .empty { text-align: center; padding: 40px 10px; color: var(--muted); }
+  input[type=text], textarea { width: 100%; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; }
+  textarea { min-height: 50vh; resize: vertical; line-height: 1.5; }
+  label.field { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 14px; }
+
+  /* Prompter */
+  #prompter { position: fixed; inset: 0; background: #000; overflow: hidden; touch-action: none;
+    user-select: none; -webkit-user-select: none; }
+  #prompter.active { display: block; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  #stage.flipH { transform: scaleX(-1); }
+  #stage.flipV { transform: scaleY(-1); }
+  #stage.flipH.flipV { transform: scale(-1, -1); }
+  #ptext { position: absolute; left: 0; right: 0; top: 0; will-change: transform;
+    white-space: pre-wrap; word-wrap: break-word; color: #fff; font-weight: 600; }
+  #ptext b { color: #ffe066; }
+  #guide { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--guide);
+    pointer-events: none; }
+  #guide::before, #guide::after { content: ""; position: absolute; top: -9px; border: 8px solid transparent; }
+  #guide::before { left: 0; border-left-color: var(--accent); }
+  #guide::after { right: 0; border-right-color: var(--accent); }
+  #progress { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); width: 0; opacity: .6; }
+  #hud { position: absolute; left: 0; right: 0; top: 0; z-index: 5;
+    padding: calc(8px + env(safe-area-inset-top)) 10px 10px; background: rgba(0,0,0,.85);
+    border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px;
+    transition: opacity .2s; }
+  #prompter.playing #hud { opacity: 0; pointer-events: none; }
+  #hud .row button { flex: 0 0 auto; padding: 8px 12px; }
+  #hud .grp { display: flex; align-items: center; gap: 6px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px; padding: 2px 4px; }
+  #hud .grp button { border: 0; background: none; min-width: 40px; padding: 6px; }
+  #hud .grp span { min-width: 64px; text-align: center; font-size: 14px; color: var(--muted); }
+  #toast { position: absolute; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translateX(-50%); background: rgba(23,26,25,.92); border: 1px solid var(--line);
+    padding: 8px 14px; border-radius: 999px; font-size: 15px; opacity: 0; transition: opacity .25s;
+    z-index: 6; pointer-events: none; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+  #count { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    font-size: 30vmin; font-weight: 800; color: var(--accent); z-index: 7; background: rgba(0,0,0,.6); }
+  #count.show { display: flex; }
+
+  /* Teste do controle */
+  #testpad { margin-top: 12px; height: 38vh; border: 2px dashed var(--line); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px;
+    touch-action: none; user-select: none; -webkit-user-select: none; color: var(--muted); outline: none; }
+  #testpad.flash { border-color: var(--accent); color: var(--text); }
+  #testlog { margin-top: 12px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+    min-height: 120px; max-height: 32vh; overflow: auto; }
+  #testlog div { padding: 3px 0; border-bottom: 1px solid var(--line); }
+  #testlog .k { color: #7cc4ff; } #testlog .g { color: #ffe066; } #testlog .p { color: var(--accent); }
+  #testlog .w { color: #ff9f7c; }
+</style>
+</head>
+<body>
+
+<!-- LISTA -->
+<section id="home" class="view active">
+  <div class="wrap">
+    <header class="bar">
+      <h1>TP Jet · Teleprompter</h1>
+      <button id="btnTest" title="Testar controle">🎮 Teste</button>
+    </header>
+    <div class="row">
+      <button class="primary" id="btnPaste">📋 Colar roteiro</button>
+      <button id="btnNew">＋ Escrever</button>
+    </div>
+    <p class="hint">Copie o roteiro no WhatsApp ou no e-mail e toque em <b>Colar roteiro</b>.
+      No Android com o app instalado, dá também para usar <b>Compartilhar → TP Jet</b>.
+      Os roteiros ficam salvos só neste aparelho.</p>
+    <div class="list" id="list"></div>
+  </div>
+</section>
+
+<!-- EDITOR -->
+<section id="editor" class="view">
+  <div class="wrap">
+    <header class="bar">
+      <button id="edBack">← Voltar</button>
+      <h1 id="edHeading">Roteiro</h1>
+    </header>
+    <label class="field" for="edTitle">Título</label>
+    <input type="text" id="edTitle" placeholder="Ex.: Reels lançamento outubro">
+    <label class="field" for="edText">Texto (use *asterisco* para destacar, como no WhatsApp)</label>
+    <textarea id="edText" placeholder="Cole ou escreva o roteiro aqui"></textarea>
+    <p class="hint" id="edStats"></p>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="edPlay">▶ Gravar</button>
+      <button id="edSave">Salvar</button>
+      <button class="danger" id="edDelete">Excluir</button>
+    </div>
+  </div>
+</section>
+
+<!-- TELEPROMPTER -->
+<section id="prompter" class="view">
+  <div id="stage">
+    <div id="ptext"></div>
+    <div id="guide"></div>
+  </div>
+  <div id="progress"></div>
+  <div id="hud">
+    <div class="row">
+      <button id="pExit">✕ Sair</button>
+      <button id="pPlay" class="primary">▶ Iniciar</button>
+      <button id="pTop">⤒ Início</button>
+      <button id="pMirrorH">⇋ Espelhar</button>
+      <button id="pMirrorV">⇵ Inverter</button>
+    </div>
+    <div class="row">
+      <div class="grp"><button data-act="speed-">−</button><span id="vSpeed"></span><button data-act="speed+">＋</button></div>
+      <div class="grp"><button data-act="font-">A−</button><span id="vFont"></span><button data-act="font+">A＋</button></div>
+      <div class="grp"><button data-act="margin-">⇤</button><span id="vMargin"></span><button data-act="margin+">⇥</button></div>
+      <div class="grp"><button data-act="guide-">↑</button><span id="vGuide"></span><button data-act="guide+">↓</button></div>
+      <button id="pCount">3‑2‑1</button>
+    </div>
+  </div>
+  <div id="count"></div>
+  <div id="toast"></div>
+</section>
+
+<!-- TESTE DO CONTROLE -->
+<section id="test" class="view">
+  <div class="wrap">
+    <header class="bar">
+      <button id="tBack">← Voltar</button>
+      <h1>Teste do controle</h1>
+    </header>
+    <p class="hint">Pareie o controle no Bluetooth do aparelho, volte aqui e aperte cada botão
+      um de cada vez. Cada sinal recebido aparece na lista abaixo.
+      <span class="k">Azul = tecla</span>, <span class="g">amarelo = gesto/deslize</span>,
+      <span class="p">verde = toque</span>, <span class="w">laranja = rolagem</span>.</p>
+    <div id="testpad" tabindex="0">Aperte os botões do controle<br>(ou toque/deslize aqui)</div>
+    <div class="row" style="margin-top:8px"><button id="tClear">Limpar lista</button></div>
+    <div id="testlog"></div>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const KEY_SCRIPTS = 'tpjet.scripts', KEY_SET = 'tpjet.settings';
+
+  // ---------- armazenamento ----------
+  const store = {
+    get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  let scripts = store.get(KEY_SCRIPTS, []);
+  const settings = Object.assign({
+    speed: 6, font: 56, margin: 6, guide: 30, mirrorH: false, mirrorV: false, countdown: true
+  }, store.get(KEY_SET, {}));
+  const saveScripts = () => store.set(KEY_SCRIPTS, scripts);
+  const saveSettings = () => store.set(KEY_SET, settings);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  // ---------- navegação ----------
+  let current = null; // roteiro aberto
+  function show(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
+    if (id !== 'prompter') { stopPlay(); releaseWake(); }
+    if (id === 'home') renderList();
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- lista ----------
+  function titleFrom(text) {
+    const first = (text || '').trim().split('\n').find(l => l.trim()) || 'Sem título';
+    return first.replace(/[*_~]/g, '').slice(0, 60);
+  }
+  function renderList() {
+    const el = $('#list');
+    el.innerHTML = '';
+    if (!scripts.length) {
+      el.innerHTML = '<div class="empty">Nenhum roteiro ainda.<br>Toque em <b>Colar roteiro</b> para começar.</div>';
+      return;
+    }
+    scripts.sort((a, b) => b.updated - a.updated).forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'item';
+      const date = new Date(s.updated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      d.innerHTML = `<div class="info"><div class="t"></div><div class="s"></div></div>
+        <button class="primary">▶</button>`;
+      d.querySelector('.t').textContent = s.title;
+      d.querySelector('.s').textContent = `${date} · ${words(s.text)} palavras · ~${duration(s.text)}`;
+      d.querySelector('.info').onclick = () => openEditor(s);
+      d.querySelector('button').onclick = () => openPrompter(s);
+      el.appendChild(d);
+    });
+  }
+  const words = (t) => (t.trim().match(/\S+/g) || []).length;
+  function duration(t) { // ~150 palavras por minuto falando
+    const sec = Math.round(words(t) / 150 * 60);
+    return sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}min${String(sec % 60).padStart(2, '0')}`;
+  }
+  function addScript(text, title) {
+    const s = { id: uid(), title: (title || '').trim() || titleFrom(text), text: text.replace(/\r\n/g, '\n').trim(),
+      updated: Date.now() };
+    scripts.push(s); saveScripts();
+    return s;
+  }
+
+  // ---------- editor ----------
+  function openEditor(s) {
+    current = s || null;
+    $('#edHeading').textContent = s ? 'Editar roteiro' : 'Novo roteiro';
+    $('#edTitle').value = s ? s.title : '';
+    $('#edText').value = s ? s.text : '';
+    $('#edDelete').style.display = s ? '' : 'none';
+    updateStats();
+    show('editor');
+    if (!s) $('#edText').focus();
+  }
+  function updateStats() {
+    const t = $('#edText').value;
+    $('#edStats').textContent = t.trim() ? `${words(t)} palavras · leitura estimada ~${duration(t)}` : '';
+  }
+  function saveEditor() {
+    const text = $('#edText').value, title = $('#edTitle').value;
+    if (!text.trim()) { alert('O roteiro está vazio.'); return null; }
+    if (current) {
+      Object.assign(current, { text: text.replace(/\r\n/g, '\n').trim(), title: title.trim() || titleFrom(text), updated: Date.now() });
+      saveScripts();
+    } else {
+      current = addScript(text, title);
+    }
+    return current;
+  }
+  $('#edText').addEventListener('input', updateStats);
+  $('#edBack').onclick = () => { if ($('#edText').value.trim()) saveEditor(); show('home'); };
+  $('#edSave').onclick = () => { if (saveEditor()) show('home'); };
+  $('#edPlay').onclick = () => { const s = saveEditor(); if (s) openPrompter(s); };
+  $('#edDelete').onclick = () => {
+    if (current && confirm('Excluir este roteiro?')) {
+      scripts = scripts.filter(x => x.id !== current.id); saveScripts(); show('home');
+    }
+  };
+
+  $('#btnNew').onclick = () => openEditor(null);
+  $('#btnPaste').onclick = async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t && t.trim()) { openEditor(addScript(t)); return; }
+    } catch {}
+    openEditor(null); // sem permissão de leitura: abre o editor para colar manualmente
+  };
+  $('#btnTest').onclick = () => { show('test'); $('#testpad').focus(); };
+
+  // ---------- teleprompter ----------
+  const P = $('#prompter'), stage = $('#stage'), ptext = $('#ptext'), guide = $('#guide');
+  let pos = 0, target = null, playing = false, last = 0, rafId = 0, maxPos = 0;
+
+  function fmt(text) {
+    const esc = text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    return esc.replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(^|\s)_([^_\n]+)_(?=\s|$)/g, '$1<i>$2</i>');
+  }
+  function applyLayout() {
+    ptext.style.fontSize = settings.font + 'px';
+    ptext.style.lineHeight = '1.35';
+    ptext.style.padding = `0 ${settings.margin}vw`;
+    stage.classList.toggle('flipH', settings.mirrorH);
+    stage.classList.toggle('flipV', settings.mirrorV);
+    guide.style.top = settings.guide + '%';
+    $('#vSpeed').textContent = 'Vel ' + settings.speed;
+    $('#vFont').textContent = settings.font + 'px';
+    $('#vMargin').textContent = 'Marg ' + settings.margin;
+    $('#vGuide').textContent = 'Guia ' + settings.guide + '%';
+    $('#pMirrorH').classList.toggle('on', settings.mirrorH);
+    $('#pMirrorV').classList.toggle('on', settings.mirrorV);
+    $('#pCount').classList.toggle('on', settings.countdown);
+    measure();
+  }
+  function measure() {
+    const vh = stage.clientHeight;
+    const top = vh * settings.guide / 100;
+    // texto começa logo abaixo da linha-guia e termina passando por ela
+    ptext.style.paddingTop = top + 'px';
+    ptext.style.paddingBottom = (vh - top) + 'px';
+    maxPos = Math.max(0, ptext.scrollHeight - vh);
+    pos = Math.min(pos, maxPos);
+    paint();
+  }
+  function paint() {
+    ptext.style.transform = `translate3d(0, ${-pos}px, 0)`;
+    $('#progress').style.width = (maxPos ? pos / maxPos * 100 : 0) + '%';
+  }
+  const pxPerSec = () => settings.speed * settings.speed * 1.2 + settings.speed * 8; // curva suave
+
+  function loop(t) {
+    const dt = last ? Math.min((t - last) / 1000, 0.1) : 0;
+    last = t;
+    if (target !== null) { // passo animado (setas / gestos)
+      const d = target - pos;
+      if (Math.abs(d) < 0.5) { pos = target; target = null; } else pos += d * Math.min(1, dt * 10);
+    } else if (playing) {
+      pos += pxPerSec() * dt;
+    }
+    if (pos >= maxPos) { pos = maxPos; if (playing) { stopPlay(); toast('Fim do roteiro'); } }
+    if (pos < 0) pos = 0;
+    paint();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  let countTimer = 0;
+  function startPlay() {
+    if (playing || countTimer) return;
+    const go = () => { playing = true; P.classList.add('playing'); $('#pPlay').textContent = '❚❚ Pausar'; };
+    if (settings.countdown && pos < 2) {
+      let n = 3; const c = $('#count');
+      c.textContent = n; c.classList.add('show');
+      P.classList.add('playing');
+      countTimer = setInterval(() => {
+        n--;
+        if (n <= 0) { clearInterval(countTimer); countTimer = 0; c.classList.remove('show'); go(); }
+        else c.textContent = n;
+      }, 800);
+    } else go();
+  }
+  function stopPlay() {
+    if (countTimer) { clearInterval(countTimer); countTimer = 0; $('#count').classList.remove('show'); }
+    playing = false; P.classList.remove('playing'); $('#pPlay').textContent = '▶ Iniciar';
+  }
+  const togglePlay = () => (playing || countTimer) ? (stopPlay(), toast('Pausado')) : startPlay();
+  function step(dir) { // dir: +1 avança, -1 volta
+    const base = target !== null ? target : pos;
+    target = Math.max(0, Math.min(maxPos, base + dir * stage.clientHeight * 0.22));
+  }
+  function changeSpeed(d) {
+    settings.speed = Math.max(1, Math.min(30, settings.speed + d)); saveSettings(); applyLayout();
+    toast('Velocidade ' + settings.speed);
+  }
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1100);
+  }
+
+  function openPrompter(s) {
+    current = s;
+    ptext.innerHTML = fmt(s.text);
+    pos = 0; target = null; playing = false;
+    show('prompter');
+    applyLayout();
+    stopPlay();
+    requestWake();
+    cancelAnimationFrame(rafId); last = 0; rafId = requestAnimationFrame(loop);
+    if (document.documentElement.requestFullscreen && !matchMedia('(display-mode: standalone)').matches) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }
+  function exitPrompter() {
+    cancelAnimationFrame(rafId);
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    show('home');
+  }
+
+  // botões do HUD
+  $('#pExit').onclick = exitPrompter;
+  $('#pPlay').onclick = togglePlay;
+  $('#pTop').onclick = () => { stopPlay(); target = 0; };
+  $('#pMirrorH').onclick = () => { settings.mirrorH = !settings.mirrorH; saveSettings(); applyLayout(); };
+  $('#pMirrorV').onclick = () => { settings.mirrorV = !settings.mirrorV; saveSettings(); applyLayout(); };
+  $('#pCount').onclick = () => { settings.countdown = !settings.countdown; saveSettings(); applyLayout(); };
+  document.querySelectorAll('#hud [data-act]').forEach(b => b.onclick = () => {
+    const a = b.dataset.act;
+    if (a === 'speed+') changeSpeed(1);
+    if (a === 'speed-') changeSpeed(-1);
+    if (a === 'font+') settings.font = Math.min(160, settings.font + 4);
+    if (a === 'font-') settings.font = Math.max(20, settings.font - 4);
+    if (a === 'margin+') settings.margin = Math.min(30, settings.margin + 2);
+    if (a === 'margin-') settings.margin = Math.max(0, settings.margin - 2);
+    if (a === 'guide+') settings.guide = Math.min(70, settings.guide + 5);
+    if (a === 'guide-') settings.guide = Math.max(10, settings.guide - 5);
+    saveSettings(); applyLayout();
+  });
+  addEventListener('resize', () => { if (P.classList.contains('active')) measure(); });
+
+  // ---------- entradas do controle no teleprompter ----------
+  const isPrompter = () => P.classList.contains('active');
+  const inHud = (e) => e.target.closest && e.target.closest('#hud');
+
+  // 1) teclas (controle de slides, teclado, alguns controles BT)
+  addEventListener('keydown', (e) => {
+    if (!isPrompter()) return;
+    const k = e.key;
+    let done = true;
+    if (['ArrowDown', 'PageDown', 'MediaTrackNext'].includes(k)) step(1);
+    else if (['ArrowUp', 'PageUp', 'MediaTrackPrevious'].includes(k)) step(-1);
+    else if (k === 'ArrowRight' || k === '+' || k === '=' || k === 'AudioVolumeUp') changeSpeed(1);
+    else if (k === 'ArrowLeft' || k === '-' || k === 'AudioVolumeDown') changeSpeed(-1);
+    else if ([' ', 'Enter', 'MediaPlayPause', 'MediaPlay', 'MediaPause', 'k', 'b', '.'].includes(k)) togglePlay();
+    else if (k === 'Home') { stopPlay(); target = 0; }
+    else if (k === 'Escape') exitPrompter();
+    else done = false;
+    if (done) e.preventDefault();
+  });
+
+  // 2) rolagem (controles que se passam por mouse / roda)
+  P.addEventListener('wheel', (e) => {
+    if (inHud(e)) return;
+    e.preventDefault();
+    target = null;
+    pos = Math.max(0, Math.min(maxPos, pos + e.deltaY * (settings.mirrorV ? -1 : 1)));
+  }, { passive: false });
+
+  // 3) gestos de toque (controles de TikTok/Reels simulam deslizar e toque duplo)
+  let tStart = null, lastTap = 0;
+  P.addEventListener('touchstart', (e) => {
+    if (inHud(e)) return;
+    const t = e.changedTouches[0];
+    tStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+  }, { passive: true });
+  P.addEventListener('touchmove', (e) => { if (!inHud(e)) e.preventDefault(); }, { passive: false });
+  P.addEventListener('touchend', (e) => {
+    if (inHud(e) || !tStart) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
+    tStart = null;
+    e.preventDefault(); // evita o "click" fantasma depois do toque
+    gesture(dx, dy);
+  }, { passive: false });
+  // mouse/caneta (alguns controles agem como mouse)
+  let mStart = null;
+  P.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch' && !inHud(e)) mStart = { x: e.clientX, y: e.clientY }; });
+  P.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'touch' || !mStart || inHud(e)) return;
+    const dx = e.clientX - mStart.x, dy = e.clientY - mStart.y; mStart = null;
+    gesture(dx, dy);
+  });
+  function gesture(dx, dy) {
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ay > 30 && ay >= ax) { // deslizar para cima = próximo (como no Reels) = avança o texto
+      step(dy < 0 ? 1 : -1);
+    } else if (ax > 30) {
+      changeSpeed(dx < 0 ? 1 : -1);
+    } else { // toque: pausa/continua (toque duplo conta como um só)
+      const now = Date.now();
+      if (now - lastTap > 400) togglePlay();
+      lastTap = now;
+    }
+  }
+
+  // ---------- tela manter acesa ----------
+  let wake = null;
+  async function requestWake() {
+    try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch {}
+  }
+  function releaseWake() { try { wake && wake.release(); } catch {} wake = null; }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isPrompter()) requestWake();
+    if (document.visibilityState === 'hidden') stopPlay();
+  });
+
+  // ---------- tela de teste ----------
+  const pad = $('#testpad'), log = $('#testlog');
+  function tlog(cls, msg) {
+    const d = document.createElement('div'); d.className = cls;
+    d.textContent = new Date().toLocaleTimeString('pt-BR') + '  ' + msg;
+    log.prepend(d);
+    pad.classList.add('flash'); pad.textContent = msg;
+    clearTimeout(pad._t); pad._t = setTimeout(() => pad.classList.remove('flash'), 500);
+  }
+  const inTest = () => $('#test').classList.contains('active');
+  addEventListener('keydown', (e) => {
+    if (!inTest()) return;
+    tlog('k', `TECLA  key="${e.key}"  code="${e.code}"  (${e.keyCode})`);
+    if (e.key !== 'Tab') e.preventDefault();
+  });
+  pad.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    tlog('w', `ROLAGEM  deltaY=${Math.round(e.deltaY)}  deltaX=${Math.round(e.deltaX)}`);
+  }, { passive: false });
+  let ts = null;
+  pad.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; ts = { x: t.clientX, y: t.clientY, n: e.touches.length }; }, { passive: true });
+  pad.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  pad.addEventListener('touchend', (e) => {
+    if (!ts) return;
+    const t = e.changedTouches[0], dx = Math.round(t.clientX - ts.x), dy = Math.round(t.clientY - ts.y);
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ay > 30 && ay >= ax) tlog('g', `DESLIZE ${dy < 0 ? 'PARA CIMA ↑' : 'PARA BAIXO ↓'}  (dy=${dy})`);
+    else if (ax > 30) tlog('g', `DESLIZE ${dx < 0 ? 'PARA ESQUERDA ←' : 'PARA DIREITA →'}  (dx=${dx})`);
+    else tlog('p', `TOQUE  (${Math.round(t.clientX)}, ${Math.round(t.clientY)})  dedos=${ts.n}`);
+    ts = null; e.preventDefault();
+  }, { passive: false });
+  pad.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') tlog('p', `PONTEIRO ${e.pointerType} botão=${e.button}`); });
+  pad.addEventListener('dblclick', () => tlog('p', 'TOQUE DUPLO / clique duplo'));
+  $('#tBack').onclick = () => show('home');
+  $('#tClear').onclick = () => { log.innerHTML = ''; };
+
+  // ---------- receber texto compartilhado (Android: Compartilhar → TP Jet) ----------
+  const q = new URLSearchParams(location.search);
+  const shared = [q.get('text'), q.get('url')].filter(Boolean).join('\n').trim();
+  if (shared) {
+    history.replaceState(null, '', location.pathname);
+    openEditor(addScript(shared, q.get('title') || ''));
+  } else {
+    renderList();
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
