@@ -6,6 +6,7 @@ Teleprompter web para gravar Reels no celular ou tablet.
 - Rolagem contínua com velocidade ajustável, tamanho de fonte, margem e linha-guia.
 - Espelhamento horizontal e vertical para uso com vidro de teleprompter.
 - Controle Bluetooth: teclas, rolagem e gestos (deslizar/tocar) são aceitos. Use a tela **Teste** para ver o que o seu controle envia.
+- Modo selfie: câmera frontal com o texto no topo da tela, perto da lente; grava o vídeo e salva na galeria.
 - Funciona offline e pode ser instalado na tela inicial. Os roteiros ficam salvos apenas no aparelho.
 
 ## Comandos

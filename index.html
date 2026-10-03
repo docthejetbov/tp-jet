@@ -101,6 +101,31 @@
     font-size: 30vmin; font-weight: 800; color: var(--accent); z-index: 7; background: rgba(0,0,0,.6); }
   #count.show { display: flex; }
 
+  /* Modo selfie: câmera frontal no fundo, texto no terço de cima (perto da lente) */
+  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+    display: none; background: #000; }
+  #prompter.selfie #cam { display: block; }
+  #prompter.selfie #stage { bottom: auto; height: 42%; transform: none;
+    background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.5)); }
+  #prompter.selfie #toast { bottom: calc(120px + env(safe-area-inset-bottom)); }
+  #rec { position: absolute; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: 76px; height: 76px; min-height: 0; border-radius: 50%; border: 4px solid #fff; background: rgba(0,0,0,.25);
+    padding: 0; display: none; z-index: 6; }
+  #rec::after { content: ""; display: block; margin: auto; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--danger); transition: all .2s; }
+  #rec.on::after { width: 30px; height: 30px; border-radius: 7px; }
+  #rec:active { transform: translateX(-50%) scale(.95); }
+  #prompter.selfie #rec { display: block; }
+  #recTime { position: absolute; right: 12px; bottom: calc(52px + env(safe-area-inset-bottom)); z-index: 6;
+    background: var(--danger); color: #fff; border-radius: 999px; padding: 4px 12px; font-size: 15px;
+    font-variant-numeric: tabular-nums; display: none; }
+  #recTime.show { display: block; }
+  #saveSheet { position: absolute; inset: 0; z-index: 9; background: rgba(0,0,0,.88); display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; }
+  #saveSheet.show { display: flex; }
+  #saveSheet video { max-width: 100%; max-height: 55vh; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+  #saveSheet .row { width: 100%; max-width: 420px; }
+
   /* Teste do controle */
   #testpad { margin-top: 12px; height: 38vh; border: 2px dashed var(--line); border-radius: 14px;
     display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px;
@@ -156,6 +181,7 @@
 
 <!-- TELEPROMPTER -->
 <section id="prompter" class="view">
+  <video id="cam" playsinline muted autoplay></video>
   <div id="stage">
     <div id="ptext"></div>
     <div id="guide"></div>
@@ -168,6 +194,7 @@
       <button id="pTop">⤒ Início</button>
       <button id="pMirrorH">⇋ Espelhar</button>
       <button id="pMirrorV">⇵ Inverter</button>
+      <button id="pSelfie">📷 Selfie</button>
     </div>
     <div class="row">
       <div class="grp"><button data-act="speed-">−</button><span id="vSpeed"></span><button data-act="speed+">＋</button></div>
@@ -179,6 +206,16 @@
   </div>
   <div id="count"></div>
   <div id="toast"></div>
+  <button id="rec" class="ctl" aria-label="Gravar vídeo"></button>
+  <div id="recTime" class="ctl"></div>
+  <div id="saveSheet" class="ctl">
+    <video id="recPreview" playsinline controls></video>
+    <div class="row">
+      <button class="primary" id="recSave">💾 Salvar / compartilhar</button>
+      <button id="recDiscard">Descartar</button>
+    </div>
+    <p class="hint" id="recInfo" style="text-align:center;margin:0"></p>
+  </div>
 </section>
 
 <!-- TESTE DO CONTROLE -->
@@ -211,7 +248,7 @@
   };
   let scripts = store.get(KEY_SCRIPTS, []);
   const settings = Object.assign({
-    speed: 6, font: 56, margin: 6, guide: 30, mirrorH: false, mirrorV: false, countdown: true
+    speed: 6, font: 56, fontSelfie: 34, margin: 6, guide: 30, mirrorH: false, mirrorV: false, countdown: true
   }, store.get(KEY_SET, {}));
   const saveScripts = () => store.set(KEY_SCRIPTS, scripts);
   const saveSettings = () => store.set(KEY_SET, settings);
@@ -221,7 +258,7 @@
   let current = null; // roteiro aberto
   function show(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
-    if (id !== 'prompter') { stopPlay(); releaseWake(); }
+    if (id !== 'prompter') { stopPlay(); releaseWake(); setSelfie(false); }
     if (id === 'home') renderList();
     window.scrollTo(0, 0);
   }
@@ -317,19 +354,24 @@
     const esc = text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     return esc.replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(^|\s)_([^_\n]+)_(?=\s|$)/g, '$1<i>$2</i>');
   }
+  const fontKey = () => selfie ? 'fontSelfie' : 'font';
   function applyLayout() {
-    ptext.style.fontSize = settings.font + 'px';
+    ptext.style.fontSize = settings[fontKey()] + 'px';
     ptext.style.lineHeight = '1.35';
     ptext.style.padding = `0 ${settings.margin}vw`;
-    stage.classList.toggle('flipH', settings.mirrorH);
-    stage.classList.toggle('flipV', settings.mirrorV);
+    // no modo selfie você lê direto na tela, então o espelhamento fica desligado
+    stage.classList.toggle('flipH', settings.mirrorH && !selfie);
+    stage.classList.toggle('flipV', settings.mirrorV && !selfie);
     guide.style.top = settings.guide + '%';
     $('#vSpeed').textContent = 'Vel ' + settings.speed;
-    $('#vFont').textContent = settings.font + 'px';
+    $('#vFont').textContent = settings[fontKey()] + 'px';
+    $('#pSelfie').classList.toggle('on', selfie);
     $('#vMargin').textContent = 'Marg ' + settings.margin;
     $('#vGuide').textContent = 'Guia ' + settings.guide + '%';
-    $('#pMirrorH').classList.toggle('on', settings.mirrorH);
-    $('#pMirrorV').classList.toggle('on', settings.mirrorV);
+    $('#pMirrorH').classList.toggle('on', settings.mirrorH && !selfie);
+    $('#pMirrorV').classList.toggle('on', settings.mirrorV && !selfie);
+    $('#pMirrorH').disabled = $('#pMirrorV').disabled = selfie;
+    $('#pMirrorH').style.opacity = $('#pMirrorV').style.opacity = selfie ? .35 : '';
     $('#pCount').classList.toggle('on', settings.countdown);
     measure();
   }
@@ -365,9 +407,9 @@
   }
 
   let countTimer = 0;
-  function startPlay() {
+  function startPlay(onGo) {
     if (playing || countTimer) return;
-    const go = () => { playing = true; P.classList.add('playing'); $('#pPlay').textContent = '❚❚ Pausar'; };
+    const go = () => { playing = true; P.classList.add('playing'); $('#pPlay').textContent = '❚❚ Pausar'; if (onGo) onGo(); };
     if (settings.countdown && pos < 2) {
       let n = 3; const c = $('#count');
       c.textContent = n; c.classList.add('show');
@@ -412,6 +454,8 @@
     }
   }
   function exitPrompter() {
+    if (isRecording()) { stopRec(); return; } // primeiro encerra e oferece salvar o vídeo
+    if ($('#saveSheet').classList.contains('show')) return;
     cancelAnimationFrame(rafId);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     show('home');
@@ -428,8 +472,8 @@
     const a = b.dataset.act;
     if (a === 'speed+') changeSpeed(1);
     if (a === 'speed-') changeSpeed(-1);
-    if (a === 'font+') settings.font = Math.min(160, settings.font + 4);
-    if (a === 'font-') settings.font = Math.max(20, settings.font - 4);
+    if (a === 'font+') settings[fontKey()] = Math.min(160, settings[fontKey()] + 4);
+    if (a === 'font-') settings[fontKey()] = Math.max(16, settings[fontKey()] - 4);
     if (a === 'margin+') settings.margin = Math.min(30, settings.margin + 2);
     if (a === 'margin-') settings.margin = Math.max(0, settings.margin - 2);
     if (a === 'guide+') settings.guide = Math.min(70, settings.guide + 5);
@@ -440,7 +484,7 @@
 
   // ---------- entradas do controle no teleprompter ----------
   const isPrompter = () => P.classList.contains('active');
-  const inHud = (e) => e.target.closest && e.target.closest('#hud');
+  const inHud = (e) => e.target.closest && e.target.closest('#hud, .ctl');
 
   // 1) teclas (controle de slides, teclado, alguns controles BT)
   addEventListener('keydown', (e) => {
@@ -503,6 +547,111 @@
     }
   }
 
+  // ---------- modo selfie: câmera frontal + gravação ----------
+  let selfie = false, stream = null, recorder = null, chunks = [], recStart = 0, recTimer = 0, lastFile = null;
+  const cam = $('#cam');
+  const isRecording = () => recorder && recorder.state !== 'inactive';
+
+  async function setSelfie(on) {
+    if (on && !selfie) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Este navegador não permite usar a câmera aqui.'); return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+          audio: { echoCancellation: true, noiseSuppression: true }
+        });
+      } catch (err) {
+        alert('Não consegui abrir a câmera. Libere o acesso à câmera e ao microfone para este site e tente de novo.');
+        return;
+      }
+      cam.srcObject = stream;
+      cam.play().catch(() => {});
+      selfie = true; P.classList.add('selfie');
+    } else if (!on && selfie) {
+      if (isRecording()) { recorder.onstop = null; recorder.stop(); }
+      endRecUi();
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      stream = null; cam.srcObject = null;
+      selfie = false; P.classList.remove('selfie');
+    }
+    if (P.classList.contains('active')) applyLayout();
+  }
+
+  function pickType() {
+    const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
+    return window.MediaRecorder ? types.find(t => MediaRecorder.isTypeSupported(t)) || '' : '';
+  }
+  function startRec() {
+    if (!stream || isRecording()) return;
+    if (!window.MediaRecorder) { alert('Este navegador não grava vídeo. Atualize o sistema ou use o Chrome/Safari mais recente.'); return; }
+    const type = pickType();
+    try {
+      recorder = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 8000000 }, type ? { mimeType: type } : {}));
+    } catch { recorder = new MediaRecorder(stream); }
+    chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const mime = (recorder.mimeType || type || 'video/mp4').split(';')[0];
+      const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+      const d = new Date(), pad2 = (n) => String(n).padStart(2, '0');
+      const name = `reels-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.${ext}`;
+      lastFile = new File(chunks, name, { type: mime });
+      showSave();
+    };
+    recorder.start(1000);
+    recStart = Date.now();
+    $('#rec').classList.add('on');
+    const rt = $('#recTime'); rt.classList.add('show');
+    const tick = () => { const s = Math.floor((Date.now() - recStart) / 1000); rt.textContent = `● ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+    tick(); recTimer = setInterval(tick, 500);
+  }
+  function endRecUi() {
+    clearInterval(recTimer); recTimer = 0;
+    $('#rec').classList.remove('on'); $('#recTime').classList.remove('show');
+  }
+  function stopRec() {
+    stopPlay();
+    endRecUi();
+    if (isRecording()) recorder.stop();
+  }
+  // botão gravar: 3-2-1 (se ligado), começa a gravar e a rolar juntos
+  $('#rec').onclick = () => {
+    if (isRecording()) { stopRec(); return; }
+    if (countTimer) { stopPlay(); return; }
+    if (playing) stopPlay();
+    startPlay(startRec);
+  };
+
+  function showSave() {
+    const v = $('#recPreview');
+    if (v.src) URL.revokeObjectURL(v.src);
+    v.src = URL.createObjectURL(lastFile);
+    const mb = (lastFile.size / 1048576).toFixed(1);
+    $('#recInfo').textContent = `${lastFile.name} · ${mb} MB`;
+    $('#saveSheet').classList.add('show');
+  }
+  function closeSave() {
+    const v = $('#recPreview');
+    v.pause(); if (v.src) URL.revokeObjectURL(v.src); v.removeAttribute('src');
+    $('#saveSheet').classList.remove('show');
+    lastFile = null;
+  }
+  $('#recSave').onclick = async () => {
+    if (!lastFile) return;
+    if (navigator.canShare && navigator.canShare({ files: [lastFile] })) {
+      try { await navigator.share({ files: [lastFile] }); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); // reserva: baixar o arquivo
+    a.href = URL.createObjectURL(lastFile); a.download = lastFile.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  };
+  $('#recDiscard').onclick = () => { if (confirm('Descartar este vídeo?')) closeSave(); };
+  $('#pSelfie').onclick = () => setSelfie(!selfie);
+
   // ---------- tela manter acesa ----------
   let wake = null;
   async function requestWake() {
@@ -511,7 +660,7 @@
   function releaseWake() { try { wake && wake.release(); } catch {} wake = null; }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && isPrompter()) requestWake();
-    if (document.visibilityState === 'hidden') stopPlay();
+    if (document.visibilityState === 'hidden') { if (isRecording()) stopRec(); else stopPlay(); }
   });
 
   // ---------- tela de teste ----------
