@@ -1,5 +1,5 @@
 // Rede primeiro (pega atualizações), cache como reserva para funcionar offline.
-const CACHE = 'tpjet-v7';
+const CACHE = 'tpjet-v8';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'logo-wide.webp'];
 
 self.addEventListener('install', (e) => {
