@@ -1,5 +1,5 @@
 // Rede primeiro (pega atualizações), cache como reserva para funcionar offline.
-const CACHE = 'tpjet-v18';
+const CACHE = 'tpjet-v19';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'logo-wide.webp', 'config.js'];
 
 self.addEventListener('install', (e) => {
@@ -17,8 +17,9 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  // no-cache: confere com o servidor (o GitHub Pages manda guardar por 10 min) e pega a versão nova na hora
   e.respondWith(
-    fetch(req)
+    fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }))
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req.mode === 'navigate' ? './' : req, copy));
