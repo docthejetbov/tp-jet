@@ -65,6 +65,25 @@
   .item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .s { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item button { min-width: 64px; }
+  @media (max-width: 520px) {
+    header.bar h1.brand img { height: 36px; }
+    #btnTest span, #accName { display: none; }
+    #btnTest, #btnAccount { padding: 10px 12px; }
+  }
+  .steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .steps li { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .steps .n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: rgba(253,124,19,.14); color: var(--accent); font-weight: 700; font-size: 14px; }
+  .steps .tx { display: flex; flex-direction: column; font-size: 14px; line-height: 1.25; min-width: 0; }
+  .steps small { color: var(--muted); font-size: 12px; }
+  @media (max-width: 520px) {
+    .steps { grid-template-columns: 1fr; gap: 6px; }
+    .steps li { padding: 8px 12px; }
+    .steps .tx { flex-direction: row; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  }
+  .note { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  .note .i { width: 15px; height: 15px; }
   .sync { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0; }
   .sync.warn { color: #ffb347; }
   .login { max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 24px;
@@ -175,6 +194,30 @@
   #saveSheet video { max-width: 100%; max-height: 55vh; border-radius: 14px; border: 1px solid var(--line); background: #000; }
   #saveSheet .row { width: 100%; max-width: 420px; }
 
+  /* Janela de confirmação do app */
+  #ask { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.72); display: flex;
+    align-items: center; justify-content: center; padding: 16px; }
+  #ask[hidden] { display: none !important; }
+  #ask .box { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; padding: 22px 20px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  #ask .ico { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: rgba(229,72,77,.12); color: var(--danger); margin-bottom: 14px; }
+  #ask .ico .i { width: 22px; height: 22px; }
+  #ask h3 { margin: 0 0 8px; font-size: 19px; }
+  #ask p { margin: 0; color: var(--muted); line-height: 1.45; font-size: 15px; }
+  #ask p b { color: var(--text); word-break: break-word; }
+  #ask .row { margin-top: 20px; }
+  #ask .row button { flex: 1; }
+  button.danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 600; }
+
+  /* Barra "Desfazer" depois de excluir */
+  #undo { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    z-index: 15; display: flex; align-items: center; gap: 14px; background: #1f1f1f; border: 1px solid var(--line);
+    border-radius: 12px; padding: 8px 8px 8px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    width: max-content; max-width: calc(100% - 32px); }
+  #undo span { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #undo button { color: var(--accent); font-weight: 600; background: none; border-color: transparent; }
+
   /* Teste do controle */
   #testpad { margin-top: 12px; height: 38vh; border: 2px dashed var(--line); border-radius: 14px;
     display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px;
@@ -208,6 +251,7 @@
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 13 3 3 0 0 0 6 19z"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
 </svg>
 
@@ -216,16 +260,19 @@
   <div class="wrap">
     <header class="bar">
       <h1 class="brand"><img src="logo-wide.webp" alt="TP Jet" width="150" height="44"></h1>
-      <button id="btnTest" title="Testar controle"><svg class="i"><use href="#i-game"/></svg>Teste</button>
+      <button id="btnTest" title="Testar controle"><svg class="i"><use href="#i-game"/></svg><span>Teste</span></button>
       <button id="btnAccount" title="Conta" hidden><svg class="i"><use href="#i-user"/></svg><span id="accName"></span></button>
     </header>
     <div class="row">
       <button class="primary" id="btnPaste"><svg class="i"><use href="#i-clip"/></svg>Colar roteiro</button>
       <button id="btnNew"><svg class="i"><use href="#i-pen"/></svg>Escrever</button>
     </div>
-    <p class="hint" id="homeHint">Copie o roteiro no WhatsApp ou no e-mail e toque em <b>Colar roteiro</b>.
-      No Android com o app instalado, dá também para usar <b>Compartilhar → TP Jet</b>.
-      <span id="storeHint">Os roteiros ficam salvos só neste aparelho.</span></p>
+    <ol class="steps" id="homeHint">
+      <li><span class="n">1</span><span class="tx"><span><b>Copie</b> o roteiro</span><small>no WhatsApp ou no e-mail</small></span></li>
+      <li><span class="n">2</span><span class="tx"><span><b>Cole</b> aqui</span><small>botão laranja acima</small></span></li>
+      <li><span class="n">3</span><span class="tx"><span><b>Grave</b></span><small>toque no ▶ do roteiro</small></span></li>
+    </ol>
+    <p class="note"><svg class="i"><use href="#i-cloud"/></svg><span id="storeHint">Os roteiros ficam salvos só neste aparelho.</span></p>
     <p class="sync" id="syncStatus" hidden></p>
     <div class="list" id="list"></div>
   </div>
@@ -346,6 +393,19 @@
     <div id="testlog"></div>
   </div>
 </section>
+
+<div id="ask" role="dialog" aria-modal="true" aria-labelledby="askTitle" hidden>
+  <div class="box">
+    <div class="ico"><svg class="i"><use href="#i-trash"/></svg></div>
+    <h3 id="askTitle"></h3>
+    <p id="askText"></p>
+    <div class="row">
+      <button id="askNo">Cancelar</button>
+      <button class="danger-fill" id="askYes"></button>
+    </div>
+  </div>
+</div>
+<div id="undo" role="status" hidden><span id="undoText"></span><button id="undoBtn">Desfazer</button></div>
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -516,8 +576,8 @@
 
   async function boot() {
     $('#storeHint').textContent = CLOUD
-      ? 'Os roteiros ficam na nuvem da equipe JetBov e aparecem em todos os aparelhos.'
-      : 'Os roteiros ficam salvos só neste aparelho.';
+      ? 'Salvo na nuvem da equipe · aparece em todos os aparelhos'
+      : 'Salvo só neste aparelho';
     if (!CLOUD) { finishBoot(); return; }
     if (!sb) { // biblioteca não carregou: provavelmente sem internet
       const last = store.get(KEY_USER, null);
@@ -607,7 +667,9 @@
       // a sincronização pode ter trocado o objeto da lista; procura pelo id
       let s = scripts.find(x => x.id === current.id);
       if (!s) { s = current; scripts.push(s); }
-      Object.assign(s, { text: text.replace(/\r\n/g, '\n').trim(), title: title.trim() || titleFrom(text) });
+      const nt = text.replace(/\r\n/g, '\n').trim(), nti = title.trim() || titleFrom(text);
+      if (s.text === nt && s.title === nti) { current = s; return s; } // nada mudou: não grava
+      Object.assign(s, { text: nt, title: nti });
       touch(s); current = s;
     } else {
       current = addScript(text, title);
@@ -618,10 +680,47 @@
   $('#edBack').onclick = () => { if ($('#edText').value.trim()) saveEditor(); show('home'); };
   $('#edSave').onclick = () => { if (saveEditor()) show('home'); };
   $('#edPlay').onclick = () => { const s = saveEditor(); if (s) openPrompter(s); };
-  $('#edDelete').onclick = () => {
-    if (current && confirm('Excluir este roteiro?')) {
-      removeScript(current.id); show('home');
-    }
+  // ---------- confirmação e desfazer ----------
+  function ask({ title, html, ok }) {
+    return new Promise((resolve) => {
+      const box = $('#ask');
+      $('#askTitle').textContent = title; $('#askText').innerHTML = html; $('#askYes').textContent = ok;
+      box.hidden = false;
+      $('#askNo').focus(); // o foco fica em Cancelar: Enter sem querer não exclui
+      const done = (v) => { box.hidden = true; box.onclick = null; removeEventListener('keydown', onKey, true); resolve(v); };
+      const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } };
+      addEventListener('keydown', onKey, true);
+      $('#askNo').onclick = () => done(false);
+      $('#askYes').onclick = () => done(true);
+      box.onclick = (e) => { if (e.target === box) done(false); }; // toque fora cancela
+    });
+  }
+  const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let undoTimer = 0;
+  function offerUndo(msg, undo) {
+    const bar = $('#undo');
+    $('#undoText').textContent = msg; bar.hidden = false;
+    clearTimeout(undoTimer); undoTimer = setTimeout(() => { bar.hidden = true; }, 8000);
+    $('#undoBtn').onclick = () => { clearTimeout(undoTimer); bar.hidden = true; undo(); };
+  }
+
+  $('#edDelete').onclick = async () => {
+    if (!current) return;
+    const s = scripts.find(x => x.id === current.id) || current;
+    const ok = await ask({
+      title: 'Excluir roteiro?',
+      html: `<b>${esc(s.title)}</b> será apagado${CLOUD ? ' para toda a equipe' : ' deste aparelho'}.`,
+      ok: 'Excluir'
+    });
+    if (!ok) return;
+    const copy = Object.assign({}, s);
+    removeScript(s.id); show('home');
+    offerUndo('Roteiro excluído', () => {
+      // devolve o roteiro; na nuvem ele é gravado de novo
+      deleted = deleted.filter(id => id !== copy.id); store.set(KEY_DEL, deleted);
+      delete copy._dirty; scripts.push(copy); touch(copy);
+      if ($('#home').classList.contains('active')) renderList();
+    });
   };
 
   $('#btnNew').onclick = () => openEditor(null);
@@ -937,7 +1036,9 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   };
-  $('#recDiscard').onclick = () => { if (confirm('Descartar este vídeo?')) closeSave(); };
+  $('#recDiscard').onclick = async () => {
+    if (await ask({ title: 'Descartar vídeo?', html: 'O vídeo gravado será apagado e não dá para recuperar.', ok: 'Descartar' })) closeSave();
+  };
   $('#pSelfie').onclick = () => setSelfie(!selfie);
 
   // ---------- tela manter acesa ----------
