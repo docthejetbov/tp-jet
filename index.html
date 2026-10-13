@@ -43,8 +43,8 @@
   .view { display: none; min-height: 100%; }
   .view.active { display: block; }
   .wrap { max-width: 720px; margin: 0 auto;
-    padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
-  header.bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    padding: calc(20px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom)); }
+  header.bar { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
   header.bar h1 { font-size: 22px; margin: 0; flex: 1; font-weight: 600; letter-spacing: -.01em; }
   header.bar h1.brand { display: flex; align-items: center; gap: 10px; }
   header.bar h1.brand img { height: 44px; width: auto; display: block; }
@@ -55,34 +55,79 @@
     background: rgba(253,124,19,.1); border: 1px solid rgba(253,124,19,.3); border-radius: 999px; padding: 3px 10px; }
   .item:hover { border-color: rgba(253,124,19,.45); }
   input[type=text]:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row > button { flex: 1 1 auto; }
   .hint { color: var(--muted); font-size: 14px; line-height: 1.45; }
-  .list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
-  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px 14px; display: flex; gap: 10px; align-items: center; }
-  .item .info { flex: 1; min-width: 0; cursor: pointer; }
-  .item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .s { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item button { min-width: 64px; }
+  .home-actions > button { min-height: 52px; font-size: 16px; }
+
+  /* Lista de roteiros */
+  .sec-title { display: flex; align-items: center; gap: 10px; margin: 36px 0 14px; font-size: 13px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .sec-title .count { background: #1d1d1d; border: 1px solid var(--line); color: var(--text); border-radius: 999px;
+    padding: 1px 9px; font-size: 12px; letter-spacing: 0; }
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; display: flex; gap: 14px; align-items: center; transition: border-color .15s, background .15s; }
+  .item:hover { background: #181818; }
+  .item .doc { flex: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: rgba(253,124,19,.1); color: var(--accent); }
+  .item .doc .i { width: 22px; height: 22px; }
+  .item .info { flex: 1; min-width: 0; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+  .item .t { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted);
+    background: #1c1c1c; border: 1px solid #242424; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+  .chip .i { width: 13px; height: 13px; }
+  .chip.warn { color: #ffb347; border-color: rgba(255,179,71,.3); background: rgba(255,179,71,.08); }
+  .item .play { flex: none; width: 52px; height: 52px; min-height: 0; border-radius: 50%; padding: 0; }
+  .item .play .i { width: 20px; height: 20px; margin-left: 2px; }
+
+  /* Menu ☰ */
+  .menu-wrap { position: relative; }
+  #btnMenu { width: 46px; height: 46px; padding: 0; border-radius: 12px; }
+  #btnMenu .i { width: 22px; height: 22px; }
+  #menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 260px; background: #151515;
+    border: 1px solid var(--line); border-radius: 16px; padding: 8px; box-shadow: 0 18px 50px rgba(0,0,0,.6); }
+  #menu .who { display: flex; align-items: center; gap: 12px; padding: 10px 10px 14px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  #menu .av { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #0a0a0a; font-weight: 700; text-transform: uppercase; }
+  #menu .who div { min-width: 0; }
+  #menu .who b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #menu .who small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #menu button { width: 100%; justify-content: flex-start; background: none; border-color: transparent; gap: 12px; padding: 12px 10px; }
+  #menu button:hover { background: #1f1f1f; }
+  #menu button.danger { color: var(--danger); }
+  #menu hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+
+  /* Editor */
+  .ed-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+  .ed-head h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  #edBack { border: 1.5px solid var(--accent); color: var(--accent); background: rgba(253,124,19,.08);
+    font-weight: 600; padding: 10px 16px; border-radius: 12px; }
+  #edBack:hover { background: rgba(253,124,19,.16); border-color: var(--accent); }
+  .ed-actions { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ed-actions #edPlay { grid-column: 1 / -1; min-height: 52px; font-size: 16px; }
+  #edDelete { color: var(--danger); }
+
   @media (max-width: 520px) {
-    header.bar h1.brand img { height: 36px; }
-    #btnTest span, #accName { display: none; }
-    #btnTest, #btnAccount { padding: 10px 12px; }
+    header.bar h1.brand img { height: 38px; }
+    .item { padding: 14px; gap: 12px; }
+    .item .doc { display: none; }
+    .chip.words { display: none; }
   }
-  .steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .steps li { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .steps { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .steps li { display: flex; align-items: center; gap: 12px; background: transparent; border: 1px dashed #2a2a2a;
+    border-radius: 14px; padding: 12px 14px; min-width: 0; }
   .steps .n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     background: rgba(253,124,19,.14); color: var(--accent); font-weight: 700; font-size: 14px; }
   .steps .tx { display: flex; flex-direction: column; font-size: 14px; line-height: 1.25; min-width: 0; }
   .steps small { color: var(--muted); font-size: 12px; }
   @media (max-width: 520px) {
-    .steps { grid-template-columns: 1fr; gap: 6px; }
-    .steps li { padding: 8px 12px; }
+    .steps { grid-template-columns: 1fr; gap: 8px; }
+    .steps li { padding: 10px 14px; }
     .steps .tx { flex-direction: row; align-items: baseline; gap: 6px; flex-wrap: wrap; }
   }
-  .note { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  .note { display: flex; align-items: center; gap: 6px; margin: 14px 0 0; font-size: 12px; color: var(--muted); }
   .note .i { width: 15px; height: 15px; }
   .sync { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0; }
   .sync.warn { color: #ffb347; }
@@ -101,12 +146,12 @@
   input.code { letter-spacing: .4em; font-size: 22px; text-align: center; font-variant-numeric: tabular-nums; }
   .login-msg { min-height: 1.2em; margin: 12px 0 0; font-size: 14px; color: var(--muted); }
   .login-msg.err { color: var(--danger); }
-  #btnAccount span { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .empty { text-align: center; padding: 40px 10px; color: var(--muted); }
   input[type=text], textarea { width: 100%; background: var(--panel); border: 1px solid var(--line);
     border-radius: 10px; padding: 12px; }
-  textarea { min-height: 50vh; resize: vertical; line-height: 1.5; }
-  label.field { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 14px; }
+  input[type=text], textarea { padding: 14px; border-radius: 12px; font-size: 16px; }
+  textarea { min-height: 50vh; resize: vertical; line-height: 1.55; }
+  label.field { display: block; margin: 18px 0 8px; color: var(--muted); font-size: 14px; }
 
   /* Prompter */
   #prompter { position: fixed; inset: 0; background: #000; overflow: hidden; touch-action: none;
@@ -252,6 +297,11 @@
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 13 3 3 0 0 0 6 19z"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8M7 21v-7h10v7"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
 </svg>
 
@@ -260,10 +310,20 @@
   <div class="wrap">
     <header class="bar">
       <h1 class="brand"><img src="logo-wide.webp" alt="TP Jet" width="150" height="44"></h1>
-      <button id="btnTest" title="Testar controle"><svg class="i"><use href="#i-game"/></svg><span>Teste</span></button>
-      <button id="btnAccount" title="Conta" hidden><svg class="i"><use href="#i-user"/></svg><span id="accName"></span></button>
+      <div class="menu-wrap">
+        <button id="btnMenu" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+        <div id="menu" role="menu" hidden>
+          <div class="who" id="menuWho" hidden>
+            <span class="av" id="menuAv"></span>
+            <div><b id="menuName"></b><small id="menuEmail"></small></div>
+          </div>
+          <button id="btnTest" role="menuitem"><svg class="i"><use href="#i-game"/></svg>Testar controle</button>
+          <hr id="menuSep" hidden>
+          <button id="btnAccount" role="menuitem" class="danger" hidden><svg class="i"><use href="#i-logout"/></svg>Sair da conta</button>
+        </div>
+      </div>
     </header>
-    <div class="row">
+    <div class="row home-actions">
       <button class="primary" id="btnPaste"><svg class="i"><use href="#i-clip"/></svg>Colar roteiro</button>
       <button id="btnNew"><svg class="i"><use href="#i-pen"/></svg>Escrever</button>
     </div>
@@ -274,6 +334,7 @@
     </ol>
     <p class="note"><svg class="i"><use href="#i-cloud"/></svg><span id="storeHint">Os roteiros ficam salvos só neste aparelho.</span></p>
     <p class="sync" id="syncStatus" hidden></p>
+    <h2 class="sec-title">Roteiros <span class="count" id="listCount">0</span></h2>
     <div class="list" id="list"></div>
   </div>
 </section>
@@ -310,19 +371,19 @@
 <!-- EDITOR -->
 <section id="editor" class="view">
   <div class="wrap">
-    <header class="bar">
-      <button id="edBack"><svg class="i"><use href="#i-back"/></svg>Voltar</button>
+    <header class="ed-head">
       <h1 id="edHeading">Roteiro</h1>
+      <button id="edBack" title="Fechar e salvar"><svg class="i"><use href="#i-x"/></svg>Fechar</button>
     </header>
     <label class="field" for="edTitle">Título</label>
     <input type="text" id="edTitle" placeholder="Ex.: Reels lançamento outubro">
     <label class="field" for="edText">Texto (use *asterisco* para destacar, como no WhatsApp)</label>
     <textarea id="edText" placeholder="Cole ou escreva o roteiro aqui"></textarea>
     <p class="hint" id="edStats"></p>
-    <div class="row" style="margin-top:12px">
+    <div class="ed-actions">
       <button class="primary" id="edPlay"><svg class="i fill"><use href="#i-play"/></svg>Abrir no teleprompter</button>
-      <button id="edSave">Salvar</button>
-      <button class="danger" id="edDelete">Excluir</button>
+      <button id="edSave"><svg class="i"><use href="#i-save"/></svg>Salvar</button>
+      <button id="edDelete"><svg class="i"><use href="#i-trash"/></svg>Excluir</button>
     </div>
   </div>
 </section>
@@ -550,7 +611,7 @@
 
   function signedIn(email) {
     user = email.toLowerCase(); store.set(KEY_USER, user);
-    $('#accName').textContent = shortName(user); $('#btnAccount').hidden = false;
+    showAccount();
     // primeira vez: leva para a nuvem os roteiros que já estavam só neste aparelho
     const old = store.get(KEY_SCRIPTS, []);
     if (!store.get(KEY_MIGR, false) && old.length) {
@@ -561,16 +622,25 @@
     finishBoot();
     sync();
   }
+  function showAccount() {
+    const on = !!user;
+    $('#menuWho').hidden = !on; $('#menuSep').hidden = !on; $('#btnAccount').hidden = !on;
+    if (on) { $('#menuAv').textContent = user[0]; $('#menuName').textContent = shortName(user); $('#menuEmail').textContent = user; }
+  }
   $('#btnAccount').onclick = async () => {
+    closeMenu();
     const pend = scripts.some(s => s._dirty) || deleted.length;
-    if (!confirm(`Conectado como ${user}.` + (pend ? '\n\nAtenção: há alterações ainda não enviadas, que serão perdidas.' : '') + '\n\nSair da conta neste aparelho?')) return;
+    const ok = await ask({ title: 'Sair da conta?', ok: 'Sair', icon: 'logout',
+      html: `Você está conectado como <b>${esc(user)}</b>.` +
+        (pend ? '<br><br>Há alterações ainda não enviadas para a nuvem. Elas serão perdidas.' : '') });
+    if (!ok) return;
     try { if (sb) await sb.auth.signOut(); } catch {}
     signedOut();
   };
   function signedOut() {
     user = null; scripts = []; deleted = [];
     [KEY_CLOUD, KEY_DEL, KEY_USER].forEach(k => { try { localStorage.removeItem(k); } catch {} });
-    $('#btnAccount').hidden = true; setSync('');
+    showAccount(); setSync('');
     show('login'); loginStep(1);
   }
 
@@ -582,7 +652,7 @@
     if (!sb) { // biblioteca não carregou: provavelmente sem internet
       const last = store.get(KEY_USER, null);
       if (last) {
-        user = last; $('#accName').textContent = shortName(user); $('#btnAccount').hidden = false;
+        user = last; showAccount();
         finishBoot(); setSync('Sem internet. Mostrando a última cópia salva neste aparelho.', true);
       } else { show('login'); loginMsg('Sem internet. Conecte-se para entrar.', true); }
       return;
@@ -614,6 +684,7 @@
   function renderList() {
     const el = $('#list');
     el.innerHTML = '';
+    $('#listCount').textContent = scripts.length;
     if (!scripts.length) {
       el.innerHTML = '<div class="empty">Nenhum roteiro ainda.<br>Toque em <b>Colar roteiro</b> para começar.</div>';
       return;
@@ -622,14 +693,21 @@
       const d = document.createElement('div');
       d.className = 'item';
       const date = new Date(s.updated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      d.innerHTML = `<div class="info"><div class="t"></div><div class="s"></div></div>
-        <button class="primary" aria-label="Abrir no teleprompter"><svg class="i fill"><use href="#i-play"/></svg></button>`;
+      d.innerHTML = `<span class="doc"><svg class="i"><use href="#i-doc"/></svg></span>
+        <div class="info"><div class="t"></div><div class="meta"></div></div>
+        <button class="primary play" aria-label="Abrir no teleprompter"><svg class="i fill"><use href="#i-play"/></svg></button>`;
       d.querySelector('.t').textContent = s.title;
-      const who = CLOUD && (s.editor || s.author) ? ` · ${shortName(s.editor || s.author)}` : '';
-      d.querySelector('.s').textContent = `${date}${who} · ${words(s.text)} palavras · ~${duration(s.text)}` +
-        (s._dirty ? ' · aguardando envio' : '');
+      const chip = (icon, text, cls) => {
+        const c = document.createElement('span'); c.className = 'chip' + (cls ? ' ' + cls : '');
+        c.innerHTML = icon ? `<svg class="i"><use href="#i-${icon}"/></svg>` : '';
+        c.appendChild(document.createTextNode(text)); return c;
+      };
+      const meta = d.querySelector('.meta');
+      meta.append(chip('', date), chip('clock', '~' + duration(s.text)), chip('', words(s.text) + ' palavras', 'words'));
+      if (CLOUD && (s.editor || s.author)) meta.append(chip('user', shortName(s.editor || s.author)));
+      if (s._dirty) meta.append(chip('cloud', 'aguardando envio', 'warn'));
       d.querySelector('.info').onclick = () => openEditor(s);
-      d.querySelector('button').onclick = () => openPrompter(s);
+      d.querySelector('.play').onclick = () => openPrompter(s);
       el.appendChild(d);
     });
   }
@@ -681,9 +759,10 @@
   $('#edSave').onclick = () => { if (saveEditor()) show('home'); };
   $('#edPlay').onclick = () => { const s = saveEditor(); if (s) openPrompter(s); };
   // ---------- confirmação e desfazer ----------
-  function ask({ title, html, ok }) {
+  function ask({ title, html, ok, icon = 'trash' }) {
     return new Promise((resolve) => {
       const box = $('#ask');
+      box.querySelector('.ico use').setAttribute('href', '#i-' + icon);
       $('#askTitle').textContent = title; $('#askText').innerHTML = html; $('#askYes').textContent = ok;
       box.hidden = false;
       $('#askNo').focus(); // o foco fica em Cancelar: Enter sem querer não exclui
@@ -731,7 +810,16 @@
     } catch {}
     openEditor(null); // sem permissão de leitura: abre o editor para colar manualmente
   };
-  $('#btnTest').onclick = () => { show('test'); $('#testpad').focus(); };
+  $('#btnTest').onclick = () => { closeMenu(); show('test'); $('#testpad').focus(); };
+  // menu ☰
+  function closeMenu() { $('#menu').hidden = true; $('#btnMenu').setAttribute('aria-expanded', 'false'); }
+  $('#btnMenu').onclick = (e) => {
+    e.stopPropagation();
+    const open = $('#menu').hidden;
+    $('#menu').hidden = !open; $('#btnMenu').setAttribute('aria-expanded', String(open));
+  };
+  document.addEventListener('click', (e) => { if (!e.target.closest('.menu-wrap')) closeMenu(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 
   // ---------- teleprompter ----------
   const P = $('#prompter'), stage = $('#stage'), ptext = $('#ptext'), guide = $('#guide');
