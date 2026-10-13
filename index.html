@@ -236,14 +236,15 @@
     <div class="card">
       <div id="loginStep1">
         <h2>Entrar</h2>
-        <p class="hint">Use seu e-mail <b>@jetbov.com</b>. Você recebe um código por e-mail, sem senha.</p>
+        <p class="hint">Use seu e-mail <b>@jetbov.com</b>. Você recebe um acesso por e-mail, sem senha.</p>
         <label class="field" for="loginEmail">E-mail</label>
         <input type="email" id="loginEmail" autocomplete="email" inputmode="email" placeholder="nome@jetbov.com">
         <button class="primary wide" id="loginSend"><svg class="i"><use href="#i-mail"/></svg>Enviar código</button>
       </div>
       <div id="loginStep2" hidden>
         <h2>Digite o código</h2>
-        <p class="hint">Enviamos um código para <b id="loginSentTo"></b>. Confira também o spam.</p>
+        <p class="hint">Enviamos um e-mail para <b id="loginSentTo"></b> (confira também o spam).
+          <b>Toque no link do e-mail</b> ou, se ele trouxer um código, digite abaixo.</p>
         <label class="field" for="loginCode">Código</label>
         <input type="text" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000" class="code">
         <button class="primary wide" id="loginVerify">Entrar</button>
