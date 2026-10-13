@@ -733,7 +733,7 @@
     $('#edText').value = s ? s.text : '';
     $('#edDelete').style.display = s ? '' : 'none';
     updateStats();
-    show('editor');
+    go('editor');
     if (!s) $('#edText').focus();
   }
   function updateStats() {
@@ -757,8 +757,8 @@
     return current;
   }
   $('#edText').addEventListener('input', updateStats);
-  $('#edBack').onclick = () => { if ($('#edText').value.trim()) saveEditor(); show('home'); };
-  $('#edSave').onclick = () => { if (saveEditor()) show('home'); };
+  $('#edBack').onclick = () => back();
+  $('#edSave').onclick = () => { if (saveEditor()) back(); };
   $('#edPlay').onclick = () => { const s = saveEditor(); if (s) openPrompter(s); };
   // ---------- confirmação e desfazer ----------
   function ask({ title, html, ok, icon = 'trash' }) {
@@ -780,7 +780,7 @@
   let undoTimer = 0;
   function offerUndo(msg, undo) {
     const bar = $('#undo');
-    $('#undoText').textContent = msg; bar.hidden = false;
+    $('#undoText').textContent = msg; $('#undoBtn').hidden = false; bar.hidden = false;
     clearTimeout(undoTimer); undoTimer = setTimeout(() => { bar.hidden = true; }, 8000);
     $('#undoBtn').onclick = () => { clearTimeout(undoTimer); bar.hidden = true; undo(); };
   }
@@ -795,7 +795,9 @@
     });
     if (!ok) return;
     const copy = Object.assign({}, s);
-    removeScript(s.id); show('home');
+    removeScript(s.id);
+    current = null; $('#edText').value = ''; $('#edTitle').value = ''; // nada a salvar ao sair
+    back();
     offerUndo('Roteiro excluído', () => {
       // devolve o roteiro; na nuvem ele é gravado de novo
       deleted = deleted.filter(id => id !== copy.id); store.set(KEY_DEL, deleted);
@@ -812,7 +814,7 @@
     } catch {}
     openEditor(null); // sem permissão de leitura: abre o editor para colar manualmente
   };
-  $('#btnTest').onclick = () => { closeMenu(); show('test'); $('#testpad').focus(); };
+  $('#btnTest').onclick = () => { closeMenu(); go('test'); $('#testpad').focus(); };
   // menu ☰
   function closeMenu() { $('#menu').hidden = true; $('#btnMenu').setAttribute('aria-expanded', 'false'); }
   $('#btnMenu').onclick = (e) => {
@@ -921,7 +923,7 @@
     current = s;
     ptext.innerHTML = fmt(s.text);
     pos = 0; target = null; playing = false;
-    show('prompter');
+    go('prompter');
     applyLayout();
     stopPlay();
     requestWake();
@@ -930,12 +932,10 @@
       document.documentElement.requestFullscreen().catch(() => {});
     }
   }
-  function exitPrompter() {
-    if (isRecording()) { stopRec(); return; } // primeiro encerra e oferece salvar o vídeo
-    if ($('#saveSheet').classList.contains('show')) return;
+  function exitPrompter() { back(); }
+  function teardownPrompter() {
     cancelAnimationFrame(rafId);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    show('home');
   }
 
   // botões do HUD
@@ -1175,14 +1175,65 @@
   }, { passive: false });
   pad.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') tlog('p', `PONTEIRO ${e.pointerType} botão=${e.button}`); });
   pad.addEventListener('dblclick', () => tlog('p', 'TOQUE DUPLO / clique duplo'));
-  $('#tBack').onclick = () => show('home');
+  $('#tBack').onclick = () => back();
   $('#tClear').onclick = () => { log.innerHTML = ''; };
+
+  // ---------- botão Voltar do celular ----------
+  // Cada tela aberta "para frente" ganha uma entrada no histórico. O Voltar (do celular ou do app)
+  // fecha a tela atual e mostra a anterior. Janelas abertas (menu, confirmação) fecham primeiro.
+  const viewNow = () => (document.querySelector('.view.active') || {}).id;
+  function go(id) {
+    if (viewNow() !== id) history.pushState({ v: id }, '');
+    show(id);
+  }
+  function back() {
+    const st = history.state && history.state.v;
+    if (st && st !== 'home' && st !== 'root' && st !== 'login') history.back();
+    else leave(viewNow(), 'home');
+  }
+  // sai da tela atual; devolve false quando é preciso ficar nela
+  function leave(cur, dest) {
+    if (cur === 'prompter') {
+      if (isRecording()) { stopRec(); return false; } // encerra e oferece salvar o vídeo
+      if ($('#saveSheet').classList.contains('show')) { toast('Salve ou descarte o vídeo antes de sair'); return false; }
+      teardownPrompter();
+    }
+    if (cur === 'editor' && $('#edText').value.trim()) saveEditor();
+    if (dest !== cur) show(dest);
+    return true;
+  }
+  let exitArmed = 0;
+  addEventListener('popstate', (e) => {
+    const cur = viewNow();
+    const dest = (e.state && e.state.v) || 'root';
+    const stay = () => history.pushState({ v: cur }, ''); // devolve a entrada consumida
+    if (!$('#ask').hidden) { $('#askNo').click(); stay(); return; }
+    if (!$('#menu').hidden) { closeMenu(); stay(); return; }
+    if (dest === 'root') {
+      // na tela inicial: o primeiro Voltar avisa, o segundo sai do app
+      if (cur !== 'home' && cur !== 'login') { if (!leave(cur, 'home')) { stay(); return; } }
+      if (Date.now() - exitArmed < 2500) { history.back(); return; }
+      exitArmed = Date.now();
+      history.pushState({ v: viewNow() }, '');
+      notice('Toque em Voltar de novo para sair');
+      return;
+    }
+    if (!leave(cur, dest)) stay();
+  });
+  function notice(msg) {
+    const bar = $('#undo');
+    $('#undoText').textContent = msg; $('#undoBtn').hidden = true; bar.hidden = false;
+    clearTimeout(undoTimer); undoTimer = setTimeout(() => { bar.hidden = true; $('#undoBtn').hidden = false; }, 2500);
+  }
 
   // ---------- receber texto compartilhado (Android: Compartilhar → TP Jet) ----------
   const q = new URLSearchParams(location.search);
   const shared = [q.get('text'), q.get('url')].filter(Boolean).join('\n').trim();
   let pendingShared = shared ? { text: shared, title: q.get('title') || '' } : null;
   if (shared) history.replaceState(null, '', location.pathname + location.hash);
+  // base do histórico: "root" embaixo e a tela inicial em cima, para o Voltar não sair direto do app
+  history.replaceState({ v: 'root' }, '');
+  history.pushState({ v: 'home' }, '');
   function finishBoot() {
     if (pendingShared) { const p = pendingShared; pendingShared = null; openEditor(addScript(p.text, p.title)); }
     else show('home');
