@@ -77,6 +77,8 @@
   button.ghost { background: none; border-color: transparent; color: var(--muted); }
   input[type=email] { width: 100%; background: #0f0f0f; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
   input[type=email]:focus { outline: none; border-color: var(--accent); }
+  input[type=password] { width: 100%; background: #0f0f0f; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  input[type=password]:focus { outline: none; border-color: var(--accent); }
   input.code { letter-spacing: .4em; font-size: 22px; text-align: center; font-variant-numeric: tabular-nums; }
   .login-msg { min-height: 1.2em; margin: 12px 0 0; font-size: 14px; color: var(--muted); }
   .login-msg.err { color: var(--danger); }
@@ -236,10 +238,13 @@
     <div class="card">
       <div id="loginStep1">
         <h2>Entrar</h2>
-        <p class="hint">Use seu e-mail <b>@jetbov.com</b>. Você recebe um acesso por e-mail, sem senha.</p>
+        <p class="hint">Use seu e-mail <b>@jetbov.com</b> e a senha que o administrador criou para você.</p>
         <label class="field" for="loginEmail">E-mail</label>
-        <input type="email" id="loginEmail" autocomplete="email" inputmode="email" placeholder="nome@jetbov.com">
-        <button class="primary wide" id="loginSend"><svg class="i"><use href="#i-mail"/></svg>Enviar código</button>
+        <input type="email" id="loginEmail" autocomplete="username" inputmode="email" placeholder="nome@jetbov.com">
+        <label class="field" for="loginPass">Senha</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••">
+        <button class="primary wide" id="loginPw">Entrar</button>
+        <button class="wide ghost" id="loginSend"><svg class="i"><use href="#i-mail"/></svg>Entrar com código por e-mail</button>
       </div>
       <div id="loginStep2" hidden>
         <h2>Digite o código</h2>
@@ -439,7 +444,9 @@
   }
   function friendly(error) {
     const m = (error && error.message) || '';
-    if (/rate|seconds|too many/i.test(m)) return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
+    if (/invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos. Se esqueceu a senha, peça ao administrador para trocar.';
+    if (/email not confirmed/i.test(m)) return 'Conta ainda não confirmada. Peça ao administrador para marcar "Auto Confirm User".';
+    if (/rate|seconds|too many/i.test(m)) return 'Limite de e-mails atingido. Use a senha ou aguarde um pouco e tente de novo.';
     if (/jetbov|database error|not allowed|signups/i.test(m)) return `Este e-mail não tem acesso. Use um e-mail @${DOMAIN}.`;
     return 'Não deu certo: ' + m;
   }
@@ -456,6 +463,17 @@
     loginEmail = email; $('#loginSentTo').textContent = email; $('#loginCode').value = '';
     loginMsg(''); loginStep(2);
   };
+  $('#loginPw').onclick = async () => {
+    const email = $('#loginEmail').value.trim().toLowerCase(), password = $('#loginPass').value;
+    if (!allowed(email)) { loginMsg(`Use um e-mail @${DOMAIN}.`, true); return; }
+    if (!password) { loginMsg('Digite a senha.', true); return; }
+    if (!sb) { loginMsg('Sem internet. Conecte-se para entrar.', true); return; }
+    const b = $('#loginPw'); b.disabled = true; loginMsg('Entrando…');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    b.disabled = false;
+    if (error || !data.user) { loginMsg(friendly(error), true); return; }
+    $('#loginPass').value = ''; loginMsg(''); signedIn(data.user.email);
+  };
   $('#loginVerify').onclick = async () => {
     const token = $('#loginCode').value.replace(/\D/g, '');
     if (token.length < 6) { loginMsg('Digite o código completo.', true); return; }
@@ -466,7 +484,8 @@
     loginMsg(''); signedIn(data.user.email);
   };
   $('#loginBack').onclick = () => { loginMsg(''); loginStep(1); };
-  $('#loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#loginSend').click(); });
+  $('#loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#loginPass').focus(); });
+  $('#loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#loginPw').click(); });
   $('#loginCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#loginVerify').click(); });
 
   function signedIn(email) {
