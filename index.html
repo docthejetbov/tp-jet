@@ -178,6 +178,8 @@
   #hud .hrow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
   #hud .hrow + .hrow { padding-top: 10px; border-top: 1px solid var(--line); }
   #hud button { padding: 8px 14px; white-space: nowrap; }
+  #pExit { color: var(--danger); border: 1.5px solid var(--danger); background: rgba(229,72,77,.1); font-weight: 600; }
+  #pExit:hover { background: rgba(229,72,77,.2); border-color: var(--danger); }
   #hud .sep { width: 1px; align-self: stretch; background: var(--line); }
   #hud .cluster { display: flex; gap: 6px; }
   /* bloco segmentado de modos */
@@ -402,7 +404,7 @@
       <span class="sep"></span>
       <div class="cluster">
         <button id="pPlay" class="primary"><svg class="i fill"><use href="#i-play"/></svg>Iniciar</button>
-        <button id="pTop" title="Voltar ao início"><svg class="i"><use href="#i-top"/></svg>Início</button>
+        <button id="pTop" title="Voltar ao topo do texto"><svg class="i"><use href="#i-top"/></svg>Topo</button>
       </div>
       <span class="sep"></span>
       <div class="seg">
