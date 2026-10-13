@@ -1,0 +1,7 @@
+// Configuração do banco (Supabase). Com os campos vazios, o app funciona só no aparelho.
+// Use a chave "anon"/"publishable" (é pública por natureza). NUNCA coloque aqui a "service_role"/"secret".
+window.TPJET_CONFIG = {
+  supabaseUrl: '',
+  supabaseKey: '',
+  allowedDomain: 'jetbov.com'
+};
